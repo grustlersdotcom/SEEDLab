@@ -1,5 +1,14 @@
 import cv2
 import numpy as np
+from smbus2 import SMBus as i2c
+from time import sleep
+import queue
+import threading
+import board
+import adafruit_character_lcd.character_lcd_rgb_i2c as lcd
+
+# Define arduino i2c bus
+ARD_ADDR = 8
 
 # Define screen size (you can set this based on your display resolution)
 SCREEN_WIDTH = 640
@@ -29,6 +38,36 @@ def draw_quadrants(frame):
     cv2.line(frame, (SCREEN_WIDTH // 2, 0), (SCREEN_WIDTH // 2, SCREEN_HEIGHT), (0, 255, 0), 2)
     cv2.line(frame, (0, SCREEN_HEIGHT // 2), (SCREEN_WIDTH, SCREEN_HEIGHT // 2), (0, 255, 0), 2)
 
+q = queue.Queue()
+
+# Function to send to Arduino over i2c
+def write_to_i2c():
+    coordDict = {"NE": [1, "[0, 0]"],"NW": [2, "[0, 1]"],"SW": [3, "[1, 1]"], "SE": [4, "[1, 0]"]}
+    current = ""
+    while True:
+        if not q.empty():
+            print("Here")
+            dictResult = coordDict[q.get()]
+            if current == "":
+                current = dictResult
+            elif dictResult != current:
+                current = dictResult
+                quadrant = dictResult[0]
+                #Send info to arduino
+                with i2c(1) as bus:
+                    bus.write_byte_data(ARD_ADDR,0,quadrant)
+                #Send info to LCD Display
+                
+                with board.I2C() as bus:
+                    rows = 2
+                    columns = 16
+                    display = lcd.Character_LCD_RGB_I2C(bus,columns,rows)
+                    display.clear()
+                    display.color = [100,0,0]
+                    display.message = "Desired location\n" + dictResult[1]
+    
+busThread = threading.Thread(target = write_to_i2c,args=())
+busThread.start()
 # Capture video from webcam
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
@@ -57,6 +96,10 @@ while True:
 
             # Determine the quadrant
             quadrant = get_quadrant(center_x, center_y)
+            q.put(quadrant)
+            
+            
+                
 
             # Print marker ID and quadrant information to console
             print(f"Marker ID: {marker_id[0]}, Quadrant: {quadrant}")
