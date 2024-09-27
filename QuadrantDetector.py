@@ -46,7 +46,6 @@ def write_to_i2c():
     current = ""
     while True:
         if not q.empty():
-            print("Here")
             dictResult = coordDict[q.get()]
             if current == "":
                 current = dictResult
@@ -63,7 +62,16 @@ def write_to_i2c():
                     columns = 16
                     display = lcd.Character_LCD_RGB_I2C(bus,columns,rows)
                     display.clear()
-                    display.color = [100,0,0]
+                    if dictResult[0] == 1:
+                        display.color = [100,0,0]
+                    elif dictResult[0] == 2:
+                        display.color = [0, 100, 0]
+                    elif dictResult[0] == 3:
+                        display.color = [100, 100, 0]
+                    elif dictResult[0] == 4:
+                        display.color = [0, 0, 100]
+                    else:
+                        continue
                     display.message = "Desired location\n" + dictResult[1]
     
 busThread = threading.Thread(target = write_to_i2c,args=())
