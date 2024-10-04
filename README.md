@@ -1,2 +1,2 @@
-# Mini Project
-Clone to Raspberry Pi to get the vision up
+# SEED Lab
+All projects for seed lab F2024 Semester
