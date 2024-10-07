@@ -8,9 +8,23 @@ parameters = cv2.aruco.DetectorParameters()
 
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
+# Stolen from calibartion script
+mtx = np.array([[667.2844,0,342.1226],
+               [0,  666.966,233.012],
+               [0,  0,     1]])
+
+dist = np.array([[0.149,-1.001,-0.002,0.003,1.576]])
+
+newcameramtx = np.array([[664.206,0,343.452],
+                        [0,663.913,232.271],
+                        [0,0,1]])
+
 def detect_aruco_marker(frame):
     # Convert to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    # undistort the imate
+    gray = cv2.undistort(gray,mtx,dist,None,newcameramtx)
     
     # Detect ArUco markers
     corners, ids, _ = detector.detectMarkers(gray)
