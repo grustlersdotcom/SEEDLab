@@ -8,7 +8,7 @@ parameters = cv2.aruco.DetectorParameters()
 
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
-# Stolen from calibartion script
+# Stolen from calibration script
 mtx = np.array([[667.2844,0,342.1226],
                [0,  666.966,233.012],
                [0,  0,     1]])
