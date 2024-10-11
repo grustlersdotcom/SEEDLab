@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 import math
+import board
+import adafruit_character_lcd.character_lcd_rgb_i2c as lcd
+import queue
+import threading
 
 # Define the ArUco dictionary
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
@@ -12,19 +16,21 @@ detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 mtx = np.array([[667.2844,0,342.1226],
                [0,  666.966,233.012],
                [0,  0,     1]])
-
+#print("We made it")
 dist = np.array([[0.149,-1.001,-0.002,0.003,1.576]])
 
 newcameramtx = np.array([[664.206,0,343.452],
                         [0,663.913,232.271],
                         [0,0,1]])
 
+q = queue.Queue()
+currentAngle = 0
 def detect_aruco_marker(frame):
     # Convert to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
-    # undistort the imate
-    gray = cv2.undistort(gray,mtx,dist,None,newcameramtx)
+    # undistort the image
+    #gray = cv2.undistort(gray,mtx,dist,None,newcameramtx)
     
     # Detect ArUco markers
     corners, ids, _ = detector.detectMarkers(gray)
@@ -36,25 +42,48 @@ def detect_aruco_marker(frame):
         # Calculate angle
         image_center_x = frame.shape[1] / 2
         dx = center[0] - image_center_x
-        focal_length = frame.shape[1] / (2 * math.tan(math.radians(60 / 2)))  # Assuming 60-degree FOV
-        angle = math.degrees(math.atan2(dx, focal_length))
+        focal_length = frame.shape[1] / (2 * math.tan(math.radians(60 / 2)))
+        #Assuming 60-degree FOV
+        angle = round(math.degrees(math.atan2(dx, focal_length)),2)
         
         return angle
     
     return None
+#Communicate with the lcd display
+def write_lcd():
+    bus = board.I2C()
+    rows = 2
+    columns = 16
+    display = lcd.Character_LCD_RGB_I2C(bus,columns,rows)
+                    #display.clear()
+    display.color = [100,100,100]
+                    
+    while(True):
+        if not q.empty():
+            print("LCD Updated")
+            #with board.I2C() as bus:
+            display.message = str(q.get())
+    return
 
+lcdThread = threading.Thread(target = write_lcd, args=())
+lcdThread.start()
 # Initialize camera
 cap = cv2.VideoCapture(0)
+#print(cap.isOpened())
 
 while True:
     ret, frame = cap.read()
+    #print(ret)
     if not ret:
+        print("Broken")
         break
     
     angle = detect_aruco_marker(frame)
-    
+    if angle!=None and (currentAngle+0.2<angle or currentAngle-0.2>angle):
+        currentAngle=angle
+        q.put(angle)
     if angle is not None:
-        print(f"Angle: {angle:.2f} degrees")
+        #print(f"Angle: {angle:.2f} degrees")
         cv2.putText(frame, f"Angle: {angle:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
     cv2.imshow('ArUco Marker Detection', frame)
