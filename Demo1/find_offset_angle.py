@@ -1,3 +1,4 @@
+# THis script is responsible for finding the offset angle from the front facing vector of the camera, it uses the new camera matrix generated from our calibration script
 import cv2
 import numpy as np
 import math
