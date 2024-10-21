@@ -1,3 +1,5 @@
+# This script is resposible for computing the calibration matrices necessary for getting accurate angle offsets
+
 import numpy as np
 import cv2 as cv
 import glob
