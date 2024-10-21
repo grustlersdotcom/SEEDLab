@@ -1,3 +1,4 @@
+# This scrip generates the chessboard patterns that opencv uses to calibrate itself and get the camera matrix
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
