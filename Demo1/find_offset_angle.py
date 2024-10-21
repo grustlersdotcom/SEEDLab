@@ -1,4 +1,7 @@
-# THis script is responsible for finding the offset angle from the front facing vector of the camera, it uses the new camera matrix generated from our calibration script
+#Name: Find Offset Angle
+#Authors: Brendan and Noah
+#Description: This script is responsible for finding the offset angle from the front facing vector of the camera, it uses the new camera matrix generated from our calibration script.
+#Notes: Write to LCD logic taken from Assignment 2-1B. Queue logic and threading taken from mini-project. Camera instantiation and operation taken from several previous assignments.
 import cv2
 import numpy as np
 import math
