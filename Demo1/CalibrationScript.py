@@ -1,4 +1,7 @@
-# This script is resposible for computing the calibration matrices necessary for getting accurate angle offsets
+Name: Calibration Script
+Author: Noah
+#Description: This script is responsible for computing the calibration matrices necessary for getting accurate angle offsets.
+#Notes: Text outputs from this script are copied into the body of the angle finding code to calibrate the camera.
 
 import numpy as np
 import cv2 as cv
