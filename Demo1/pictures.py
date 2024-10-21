@@ -1,3 +1,7 @@
+#Name: Pictures
+#Author: Noah
+#Description: Saves pictures from the camera when spacebar is pressed.
+#Notes: Used to take the pictures we need for the calibration script.
 import cv2
 import os
 from datetime import datetime
