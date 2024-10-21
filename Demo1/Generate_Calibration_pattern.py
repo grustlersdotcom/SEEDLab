@@ -1,4 +1,7 @@
-# This scrip generates the chessboard patterns that opencv uses to calibrate itself and get the camera matrix
+#Name: Generate Calibration Pattern
+#Author: Noah
+#Description: This script generates the chessboard patterns that opencv uses to calibrate itself and get the camera matrix
+#Notes: After the image was generated, this code was not run again. Generated image is also in the GitHub.
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
