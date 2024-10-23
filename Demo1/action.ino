@@ -151,7 +151,7 @@ bool has_reached_target() {
 float get_target_voltage(int motor_index) {
   float target_velocity = pid_control(motor_index);
   float current_velocity = get_current_velocity(motor_index);
-  float target_voltage = feedback_gain_cell(motor_index, target_velocity - current_velocity);
+  float target_voltage = voltage_max/8*feedback_gain_cell(motor_index, target_velocity - current_velocity);
 
   // map target_voltage to apply various effects like ramping on, etc
   float original_target_voltage = target_voltage;
