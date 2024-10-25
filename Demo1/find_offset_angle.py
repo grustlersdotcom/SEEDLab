@@ -46,15 +46,8 @@ def detect_aruco_marker(frame):
         # Calculate angle
         image_center_x = frame.shape[1] / 2
         dx = center[0] - image_center_x
-<<<<<<< HEAD
-        focal_length = frame.shape[1] / (2 * math.tan(math.radians(68.5 / 2)))  # Using 68.5-degree FOV
-        angle = math.degrees(math.atan2(dx, focal_length))
-=======
-        focal_length = frame.shape[1] / (2 * math.tan(math.radians(60 / 2)))
-        #Assuming 60-degree FOV
-        angle = round(math.degrees(math.atan2(dx, focal_length)),2)
->>>>>>> deed2df9cea48a64a1a60d2072d0c922d5dbff30
-        
+        focal_length = frame.shape[1] / (2 * math.tan(math.radians(48.4 / 2)))
+        angle = round(math.degrees(math.atan2(dx, focal_length)),2)        
         return angle
     
     return None
