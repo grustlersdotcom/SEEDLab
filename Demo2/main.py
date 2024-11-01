@@ -37,7 +37,7 @@ def send_angle_over_i2c():
             # Placeholder for I2C send code
             # print(f"Sending angle over I2C: {angle_data}") # TODO fix rq
         
-        time.sleep(0.25)
+        time.sleep(0.05)
 
 # Start the I2C sending thread
 i2c_thread = threading.Thread(target=send_angle_over_i2c)
