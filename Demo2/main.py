@@ -6,7 +6,7 @@ import threading
 import time
 
 # TODO later we need to add a thread that will reset the turn_commanded flag
-
+#TODO add in thread for turning
 arrow_check = True  # Set this to true in the second demonstration
 stop_flag = False
 turn_commanded = False
