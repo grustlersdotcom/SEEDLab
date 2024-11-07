@@ -62,6 +62,7 @@ void loop() {
           configure_move_angle(targetAngle); // Rotate 20 degrees continuously
           move_mode = false;
           move_both_motors();
+          Serial.println("State 0");
           state = 1;
         }
         state = 0;
@@ -80,7 +81,7 @@ void loop() {
       case 2:
         move_mode = true;
         configure_move_straight(2);
-        state = 3;
+        //state = 3;
         move_both_motors();
         break;
       case 3:
@@ -102,7 +103,7 @@ void loop() {
 void handleI2CInput() {
   junk = Wire.read();
   while(Wire.available()){
-    command = Wire.read();  // Read the command byte
+    command =-Wire.read();  // Read the command byte
     receivedFlag = 1;       // Set the flag to indicate a message has been received
     updatedCommand = command;
 
@@ -117,7 +118,10 @@ void handleI2CInput() {
         targetAngle = -90; // Turn 90 degrees left
         state = 1;
         break;
-      case '-128':
+      case '128':
+        //Add something about transitioning to state 3
+        state = 3;
+        Serial.println("Stop case reached");
         stopMovement();
         break;
       default:
@@ -126,7 +130,7 @@ void handleI2CInput() {
           delay(1000); // Use a shorter delay to avoid blocking
           targetAngle = command; // Turn to the marker angle received
           state = 1;
-          Serial.println(command);
+          //Serial.println(command);
         }
         break;
     }
@@ -144,4 +148,3 @@ void initializeI2C() {
   Wire.begin(MY_ADDR);         // Initialize I2C with the given address
   Wire.onReceive(handleI2CInput);     // Set ISR when data is received over I2C
 }
-
