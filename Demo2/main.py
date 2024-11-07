@@ -60,7 +60,7 @@ def send_angle_over_i2c():
             with i2c(1) as bus:
                 #Sending angle data as an integer to constrain it to 8 bits.
                 #IMPORTANT: Make sure the arduino receives this information as a signed integer.
-                bus.write_byte_data(ARD_ADDR,0,int(currentAngle))
+                bus.write_byte_data(ARD_ADDR,0,currentAngle)
                 print(currentAngle)
                 ##For the final demo##
                 #If the robot is turning do not send any more angles until the robot is done turning.
@@ -71,10 +71,10 @@ def send_angle_over_i2c():
                 
             # print(f"Sending angle over I2C: {angle_data}") # TODO fix rq
         #Tunable communication parameter
-        time.sleep(0.1)
+        time.sleep(0.5)
 
 # Start the I2C sending thread
-i2c_thread = threading.Thread(target=send_angle_over_i2c)
+i2c_thread = threading.Thread(target=send_angle_over_i2c, daemon = True)
 i2c_thread.start()
 
 def detect_aruco_marker(frame):
@@ -86,7 +86,7 @@ def detect_aruco_marker(frame):
         image_center_x = frame.shape[1] / 2
         dx = center[0] - image_center_x
         focal_length = frame.shape[1] / (2 * math.tan(math.radians(48.4 / 2)))
-        angle = round(math.degrees(math.atan2(dx, focal_length)), 2)
+        angle = int(round(math.degrees(math.atan2(dx, focal_length)), 2))
         
         marker_area = cv2.contourArea(np.array(corners[0][0], dtype=np.int32))
         frame_area = frame.shape[0] * frame.shape[1]
@@ -94,7 +94,7 @@ def detect_aruco_marker(frame):
 
         return angle, percentage_visible
     
-    return 127, None
+    return None, None
 
 stop_queue = queue.Queue()
 
@@ -109,6 +109,8 @@ def process_visible_percentage(percentage_visible):
         stop_queue.put(1)
         stop_flag = True
         print("STOP FLAG RAISED")
+        current_angle = -128
+        send_angle_over_i2c()
     else:
         return
     return
@@ -187,10 +189,10 @@ def handle_red_green_flag():
                 send_angle_over_i2c()
                 print("I2C FLAG RAISED: Green percentage is within margin.")
         #I'm not sure this sleep should be in here (BR)
-        time.sleep(0.1)
+        time.sleep(0.3)
 
 # Start the updated I2C flag handling thread
-i2c_flag_thread = threading.Thread(target=handle_red_green_flag)
+i2c_flag_thread = threading.Thread(target=handle_red_green_flag, daemon = True)
 i2c_flag_thread.start()
 
 # Initialize camera
@@ -198,7 +200,7 @@ cap = cv2.VideoCapture(0)
 
 while True:
     #cap.set(cv2.CAP_PROP_AUTO_EXPOSURE,.25)
-    cap.set(cv2.CAP_PROP_BRIGHTNESS,50)
+    cap.set(cv2.CAP_PROP_BRIGHTNESS,100)
     #cap.set(cv2.CAP_PROP_EXPOSURE,-100)
     ret, frame = cap.read()
     if not ret:
@@ -244,6 +246,9 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+i2c_thread.join()
+i2c_flag_thread.join()
+
 
 #TODO all we need to do is check our calibration, check how fast we can spin, and find the margin of error on the comparison,
 # and then send the flags to the I2C bus in the best way we can.
