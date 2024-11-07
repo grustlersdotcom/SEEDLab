@@ -61,17 +61,17 @@ def send_angle_over_i2c():
                 #Sending angle data as an integer to constrain it to 8 bits.
                 #IMPORTANT: Make sure the arduino receives this information as a signed integer.
                 bus.write_byte_data(ARD_ADDR,0,int(currentAngle))
-                
+                print(currentAngle)
                 ##For the final demo##
                 #If the robot is turning do not send any more angles until the robot is done turning.
-                if currentAngle = 110 or currentAngle = -110:
+                if currentAngle == 110 or currentAngle == -110:
                     ack = 0
                     while(ack != 1 ):
                         ack = bus.read_byte_data(ARD_ADDR,0)
                 
             # print(f"Sending angle over I2C: {angle_data}") # TODO fix rq
         #Tunable communication parameter
-        time.sleep(0.05)
+        time.sleep(0.1)
 
 # Start the I2C sending thread
 i2c_thread = threading.Thread(target=send_angle_over_i2c)
@@ -94,7 +94,7 @@ def detect_aruco_marker(frame):
 
         return angle, percentage_visible
     
-    return None, None
+    return 127, None
 
 stop_queue = queue.Queue()
 
@@ -104,7 +104,7 @@ def process_visible_percentage(percentage_visible):
     if stop_flag:
         return
     
-    cutoff_percentage = 20  # Define a threshold for visibility
+    cutoff_percentage = 3  # Define a threshold for visibility
     if percentage_visible > cutoff_percentage:
         stop_queue.put(1)
         stop_flag = True
@@ -114,8 +114,8 @@ def process_visible_percentage(percentage_visible):
     return
 
 def process_green_percentage(frame):
-    lower_green = np.array([35, 100, 100])
-    upper_green = np.array([85, 255, 255])
+    lower_green = np.array([55, 100, 50])
+    upper_green = np.array([105, 255, 130])
     
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     green_mask = cv2.inRange(hsv, lower_green, upper_green)
@@ -146,7 +146,7 @@ def process_red_percentage(frame):
 i2c_flag_queue = queue.Queue()
 
 def compare_green_red_percentage(green_percentage, red_percentage):
-    margin_of_error = 5.0  # Define an acceptable margin of error between green and red percentages
+    margin_of_error = 1.00  # Define an acceptable margin of error between green and red percentages
     global turn_commanded
 
     if turn_commanded:
@@ -165,6 +165,7 @@ def compare_green_red_percentage(green_percentage, red_percentage):
     if stop_flag:
         flags = {"Red": "RED", "Green": "GREEN"}
         # Raise the flag on the I2C bus by putting it into the queue
+        print(flags[higher_color])
         i2c_flag_queue.put(flags[higher_color])
         turn_commanded = True  # Set the flag to indicate a command has been issued
 
@@ -196,6 +197,9 @@ i2c_flag_thread.start()
 cap = cv2.VideoCapture(0)
 
 while True:
+    #cap.set(cv2.CAP_PROP_AUTO_EXPOSURE,.25)
+    cap.set(cv2.CAP_PROP_BRIGHTNESS,50)
+    #cap.set(cv2.CAP_PROP_EXPOSURE,-100)
     ret, frame = cap.read()
     if not ret:
         print("Camera not available")
@@ -225,8 +229,13 @@ while True:
         cv2.putText(frame, f"Red: {red_percentage:.2f}%", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     
     if angle is not None:
+        green_percentage = process_green_percentage(frame)
+        red_percentage = process_red_percentage(frame)
         cv2.putText(frame, f"Angle: {angle:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"Visible: {percentage_visible:.2f}%", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+        cv2.putText(frame, f"Green: {green_percentage:.2f}%", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(frame, f"Red: {red_percentage:.2f}%", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    
 
     cv2.imshow('ArUco Marker Detection', frame)
     
