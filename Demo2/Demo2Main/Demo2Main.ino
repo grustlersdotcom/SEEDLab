@@ -126,7 +126,7 @@ void handleI2CInput() {
           delay(1000); // Use a shorter delay to avoid blocking
           targetAngle = command; // Turn to the marker angle received
           state = 1;
-          Serial.println(state);
+          Serial.println(command);
         }
         break;
     }
