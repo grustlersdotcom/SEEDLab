@@ -24,6 +24,7 @@ volatile float targetAngle = 20; // degrees, initial search angle
 
 const float meters_per_foot = 0.3048; // they give feet, system works in meters
 const float degrees_per_radian = 180.0 / 3.14159; // they give radians, system works in degrees
+const uint8_t SPEED = 200;
 
 // state tracking variables
 // state of 0 = Idle/Searching
@@ -34,6 +35,7 @@ int state = 0;
 int stat_print_count = 0;
 unsigned long previousMillis = 0;
 const long interval = 1000; // Interval for control loop timing
+
 
 void setup() {
   initialize_encoders();
@@ -47,7 +49,7 @@ void setup() {
   init_statistics();
   //attachInterrupt(digitalPinToInterrupt(1), stopMovement, FALLING); // Use FALLING to avoid noise issues
 
-  move_mode = true; // Explicitly initialize move_mode
+  move_mode = false; // Explicitly initialize move_mode
 }
 
 void loop() {
@@ -60,7 +62,6 @@ void loop() {
       case 0:
         if (enableAngle) {
           configure_move_angle(targetAngle); // Rotate 20 degrees continuously
-          move_mode = false;
           move_both_motors();
           Serial.println("State 0");
           state = 1;
@@ -70,7 +71,7 @@ void loop() {
       case 1:
         if (enableAngle) {
           configure_move_angle(targetAngle); // Rotate updated degrees
-          move_mode = false;
+          Serial.println("State 1");
           move_both_motors();
         }
         //move_both_motors();
@@ -79,57 +80,74 @@ void loop() {
         }
         break;
       case 2:
-        move_mode = true;
-        configure_move_straight(2);
-        //state = 3;
-        move_both_motors();
+        motorShield.setM1Speed(SPEED);
+        motorShield.setM2Speed(SPEED*0.99);
         break;
       case 3:
         Serial.println("Completed movement.");
         update_statistics(10 * voltage_max, 10 * voltage_max);
-        apply_simultaneous_voltage(0, 0);
-        //Wire.beginTransmission(MY_ADDR);
-        //Wire.write("00000"); // Send flag back to Pi after completing movement
-        //Wire.endTransmission();
-        //targetAngle = 20;
-        //state = 0; // Reset state after completion
+        motorShield.setM1Speed(0);
+        motorShield.setM2Speed(0);
+        Serial.println("State 3");
+        move_mode = false;
+        state = 4;
+        break;
+      case 4:
+        if (enableAngle) {
+          configure_move_angle(-command); // Rotate updated degrees
+          Serial.println("State 4");
+          move_both_motors();
+        state = 5;
         break;
     }
+      case 5:
+      Serial.println("Case 5");
+        if (has_reached_target()){
+          motorShield.setM1Speed(0);
+          motorShield.setM2Speed(0);
+        }
+        break;
   }
 
   delay(100);  // Adjust delay for control loop timing
+}
 }
 
 void handleI2CInput() {
   junk = Wire.read();
   while(Wire.available()){
     command =-Wire.read();  // Read the command byte
+    Serial.println(command);
     receivedFlag = 1;       // Set the flag to indicate a message has been received
     updatedCommand = command;
 
   }
   if ((receivedFlag > 0) && (updatedCommand != lastCommand)) {
     switch (command) {
-      case '110':
+      case 110:
         targetAngle = 90;  // Turn 90 degrees right
         state = 1;
         break;
-      case '-110':
+      case -110:
         targetAngle = -90; // Turn 90 degrees left
         state = 1;
         break;
-      case '128':
+      case -26:
         //Add something about transitioning to state 3
-        state = 3;
-        Serial.println("Stop case reached");
+        Serial.println("H");
         stopMovement();
+        state = 3;
         break;
       default:
+      Serial.println("Default checkpoint");
         if ((command != 127) && (command <= 25) && (command >= -25)) { // Marker detected, stop rotation and turn to specified angle
+          Serial.println("Cleared Checkpoint");
           stopMovement();
-          delay(1000); // Use a shorter delay to avoid blocking
+          //delay(100); // Use a shorter delay to avoid blocking
           targetAngle = command; // Turn to the marker angle received
-          state = 1;
+          if (lastCommand > (command + 5) || lastCommand < (command - 5)){
+            state = 1;
+          }
           //Serial.println(command);
         }
         break;
@@ -141,7 +159,6 @@ void handleI2CInput() {
 
 void stopMovement() {
   apply_simultaneous_voltage(0, 0);
-  state = 3;
 }
 
 void initializeI2C() {
