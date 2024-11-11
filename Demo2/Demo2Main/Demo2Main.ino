@@ -91,21 +91,27 @@ void loop() {
         Serial.println("State 3");
         move_mode = false;
         state = 4;
+        command = 0;
         break;
       case 4:
-        if (enableAngle) {
-          configure_move_angle(-command); // Rotate updated degrees
-          Serial.println("State 4");
-          move_both_motors();
-        state = 5;
+      Serial.println("Case 4");
+      Serial.println(command);
+          if(command>0){
+            motorShield.setM1Speed(125);
+            motorShield.setM2Speed(-125);
+            state = 5;
+          } if (command<0){
+            motorShield.setM1Speed(-125);
+            motorShield.setM2Speed(125);
+            state = 5;
+          }
+        delay(1375);
         break;
-    }
       case 5:
       Serial.println("Case 5");
-        if (has_reached_target()){
+          Serial.println("Target reached");
           motorShield.setM1Speed(0);
           motorShield.setM2Speed(0);
-        }
         break;
   }
 
@@ -124,17 +130,16 @@ void handleI2CInput() {
   }
   if ((receivedFlag > 0) && (updatedCommand != lastCommand)) {
     switch (command) {
-      case 110:
+      case 91:
         targetAngle = 90;  // Turn 90 degrees right
         state = 1;
         break;
-      case -110:
+      case -91:
         targetAngle = -90; // Turn 90 degrees left
         state = 1;
         break;
       case -26:
         //Add something about transitioning to state 3
-        Serial.println("H");
         stopMovement();
         state = 3;
         break;
@@ -145,7 +150,7 @@ void handleI2CInput() {
           stopMovement();
           //delay(100); // Use a shorter delay to avoid blocking
           targetAngle = command; // Turn to the marker angle received
-          if (lastCommand > (command + 5) || lastCommand < (command - 5)){
+          if (lastCommand > (command + 7) || lastCommand < (command - 7)){
             state = 1;
           }
           //Serial.println(command);
