@@ -36,6 +36,19 @@ int stat_print_count = 0;
 unsigned long previousMillis = 0;
 const long interval = 1000; // Interval for control loop timing
 
+unsigned long calculateServoDelay(int desiredAngle) {
+  // Time it takes for 90 degrees rotation
+  const unsigned long fullRotationTime = 1375; // ms
+  
+  // Calculate fraction of full rotation
+  float angleFraction = abs(desiredAngle) / 90.0;
+  
+  // Calculate delay time
+  unsigned long delayTime = angleFraction * fullRotationTime;
+  
+  return delayTime;
+}
+
 
 void setup() {
   initialize_encoders();
