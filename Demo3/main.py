@@ -20,6 +20,7 @@ from time import sleep
 arrow_check = True  # Set this to true in the second demonstration
 stop_flag = False
 turn_commanded = False
+course_ended = False
 
 #Arduino address for i2c communication
 ARD_ADDR = 8
@@ -159,7 +160,8 @@ i2c_flag_queue = queue.Queue()
 def compare_green_red_percentage(green_percentage, red_percentage):
     margin_of_error = 1.00  # Define an acceptable margin of error between green and red percentages
     global turn_commanded
-
+    global course_ended
+  
     if turn_commanded:
         return
 
@@ -170,6 +172,9 @@ def compare_green_red_percentage(green_percentage, red_percentage):
         higher_color = "Red"
     else:
         # If the difference is within the margin of error, do not raise any flags
+        if(not course_ended):
+          if(abs(green_percentage - red_percentage) <= cutoff_error):
+            course_ended = True
         return
 
     # Raise the flag only if stop_flag is True
