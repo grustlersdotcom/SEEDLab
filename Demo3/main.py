@@ -159,9 +159,10 @@ i2c_flag_queue = queue.Queue()
 
 def compare_green_red_percentage(green_percentage, red_percentage):
     margin_of_error = 1.00  # Define an acceptable margin of error between green and red percentages
+    cutoff_error = .01  
     global turn_commanded
     global course_ended
-  
+    
     if turn_commanded:
         return
 
